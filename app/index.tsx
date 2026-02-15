@@ -1,18 +1,32 @@
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [customerName, setCustomerName] = useState("");
+
+  const goToBill = () => {
+    if (!customerName) return;
+    router.push({
+      pathname: "/bill",
+      params: { customerName },
+    });
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Shop Billing App</Text>
+      <Text style={styles.title}>Start New Bill</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push("/bill")}
-      >
-        <Text style={styles.buttonText}>Create New Bill</Text>
+      <TextInput
+        placeholder="Enter Customer Name"
+        value={customerName}
+        onChangeText={setCustomerName}
+        style={styles.input}
+      />
+
+      <TouchableOpacity style={styles.button} onPress={goToBill}>
+        <Text style={styles.buttonText}>Create Bill</Text>
       </TouchableOpacity>
     </View>
   );
@@ -21,22 +35,26 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
     justifyContent: "center",
-    alignItems: "center",
     padding: 20,
   },
   title: {
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 30,
-    color: "#000",
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
   },
   button: {
     backgroundColor: "#007AFF",
-    padding: 15,
-    borderRadius: 10,
-    width: "80%",
+    padding: 14,
+    borderRadius: 8,
     alignItems: "center",
   },
   buttonText: {

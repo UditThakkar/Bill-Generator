@@ -1,4 +1,9 @@
+import * as FileSystem from "expo-file-system";
+import * as Print from "expo-print";
+import { useLocalSearchParams } from "expo-router";
+import * as Sharing from "expo-sharing";
 import React, { useState } from "react";
+
 import {
   ScrollView,
   StyleSheet,
@@ -8,70 +13,203 @@ import {
   View,
 } from "react-native";
 
+
 const GST_RATE = 0.18;
 
 export default function BillScreen() {
   const [itemName, setItemName] = useState("");
-  const [price, setPrice] = useState("");
+  const [vehicleBrand, setVehicleBrand] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [gstType, setGstType] = useState<"EXCLUDED" | "INCLUDED">("EXCLUDED");
+  const [listPrice, setListPrice] = useState(""); // price with GST
+  const [discount, setDiscount] = useState("");
+  const { customerName } = useLocalSearchParams();
+
   const [items, setItems] = useState<any[]>([]);
 
-  const calculateItem = (price: string, quantity: string, gstType: string) => {
-    const p = parseFloat(price);
-    const q = parseFloat(quantity);
-    if (isNaN(p) || isNaN(q)) return null;
-
-    let base = 0;
-    let gst = 0;
-    let total = 0;
-
-    if (gstType === "EXCLUDED") {
-      base = p * q;
-      gst = base * GST_RATE;
-      total = base + gst;
-    } else {
-      total = p * q;
-      base = total / (1 + GST_RATE);
-      gst = total - base;
-    }
-
-    return {
-      base: Number(base.toFixed(2)),
-      gst: Number(gst.toFixed(2)),
-      total: Number(total.toFixed(2)),
-    };
-  };
-
   const addItem = () => {
-    if (!itemName || !price || !quantity) return;
+    const qty = parseFloat(quantity);
+    const list = parseFloat(listPrice);
+    const discountPercent = parseFloat(discount) || 0;
 
-    const calc = calculateItem(price, quantity, gstType);
-    if (!calc) return;
+    if (!itemName || !qty || !list) return;
 
-    setItems([
-      ...items,
-      {
-        id: Date.now().toString(),
-        name: itemName,
-        ...calc,
-      },
-    ]);
+    const discountAmount = list * (discountPercent / 100);
+    const net = list - discountAmount;
+    const amount = net * qty;
+
+    const newItem = {
+      id: Date.now().toString(),
+      itemName,
+      vehicleBrand,
+      quantity: qty,
+      listPrice: list,
+      discountPercent,
+      discountAmount,
+      net,
+      amount,
+    };
+
+    setItems([...items, newItem]);
 
     setItemName("");
-    setPrice("");
+    setVehicleBrand("");
     setQuantity("");
+    setListPrice("");
+    setDiscount("");
   };
 
-  const totals = items.reduce(
-    (acc, item) => {
-      acc.base += item.base;
-      acc.gst += item.gst;
-      acc.total += item.total;
-      return acc;
-    },
-    { base: 0, gst: 0, total: 0 }
+  const grandTotal = items.reduce((acc, item) => acc + item.amount, 0);
+
+  const generatePDF = async () => {
+  if (items.length === 0) return;
+
+  const today = new Date().toLocaleDateString();
+
+  const rows = items
+    .map(
+      (item, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${item.itemName}</td>
+        <td>${item.vehicleBrand || "-"}</td>
+        <td>${item.quantity}</td>
+        <td>${item.listPrice}</td>
+        <td>${item.discountPercent}%</td>
+        <td>${item.net.toFixed(2)}</td>
+        <td>${item.amount.toFixed(2)}</td>
+      </tr>
+    `
+    )
+    .join("");
+
+  const html = `
+<html>
+<head>
+<meta charset="UTF-8" />
+<style>
+  body {
+    font-family: Arial;
+    padding: 25px;
+  }
+
+  .top-section {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .left {
+    width: 50%;
+    font-size: 14px;
+  }
+
+  .right {
+    width: 50%;
+    text-align: right;
+    font-size: 14px;
+  }
+
+  .shop-hindi {
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  .shop-english {
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    border: 1px solid black;
+    padding: 6px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  th {
+    background: #f2f2f2;
+  }
+
+  .total {
+    margin-top: 20px;
+    text-align: right;
+    font-weight: bold;
+    font-size: 16px;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="top-section">
+
+  <div class="left">
+    <strong>Customer Name:</strong><br/>
+    ${customerName || ""}
+  </div>
+
+  <div class="right">
+    <div class="shop-hindi">जय भवानी ऑटो पार्ट्स</div>
+    <div class="shop-english">Jai Bhavani Auto Parts</div>
+    <div>मालिक: सुनील लोनारे</div>
+    <div>Mobile: 9893916497</div>
+    <div>पुलसुद रोड, राजपुर</div>
+    <div>GSTIN: 23DCOPK7549M1ZV</div>
+    <div>Date: ${today}</div>
+  </div>
+
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>S.No</th>
+      <th>Item Name</th>
+      <th>Vehicle Brand</th>
+      <th>Qty</th>
+      <th>List</th>
+      <th>Discount</th>
+      <th>Net</th>
+      <th>Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${rows}
+  </tbody>
+</table>
+
+<div class="total">
+  Grand Total: ₹${grandTotal.toFixed(2)}
+</div>
+
+</body>
+</html>
+  `;
+
+  const { uri } = await Print.printToFileAsync({
+  html,
+});
+
+  const pdfName = `Bill_${Date.now()}.pdf`;
+
+  // Correct modern path
+  const destination = new FileSystem.File(
+    FileSystem.Paths.document,
+    pdfName
   );
+
+  // Move generated file to document directory
+  const tempFile = new FileSystem.File(uri);
+  await tempFile.move(destination);
+
+  await Sharing.shareAsync(destination.uri);
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -79,76 +217,67 @@ export default function BillScreen() {
 
       <TextInput
         placeholder="Item Name"
-        placeholderTextColor="#666"
         value={itemName}
         onChangeText={setItemName}
         style={styles.input}
       />
 
       <TextInput
-        placeholder="Price"
-        placeholderTextColor="#666"
-        value={price}
-        onChangeText={setPrice}
-        keyboardType="numeric"
+        placeholder="Vehicle Brand (Optional)"
+        value={vehicleBrand}
+        onChangeText={setVehicleBrand}
         style={styles.input}
       />
 
       <TextInput
         placeholder="Quantity"
-        placeholderTextColor="#666"
+        keyboardType="numeric"
         value={quantity}
         onChangeText={setQuantity}
-        keyboardType="numeric"
         style={styles.input}
       />
 
-      <View style={styles.toggleContainer}>
-        <TouchableOpacity
-          style={[
-            styles.toggleButton,
-            gstType === "EXCLUDED" && styles.activeToggle,
-          ]}
-          onPress={() => setGstType("EXCLUDED")}
-        >
-          <Text style={styles.toggleText}>GST Excluded</Text>
-        </TouchableOpacity>
+      <TextInput
+        placeholder="List Price (Rate with GST)"
+        keyboardType="numeric"
+        value={listPrice}
+        onChangeText={setListPrice}
+        style={styles.input}
+      />
 
-        <TouchableOpacity
-          style={[
-            styles.toggleButton,
-            gstType === "INCLUDED" && styles.activeToggle,
-          ]}
-          onPress={() => setGstType("INCLUDED")}
-        >
-          <Text style={styles.toggleText}>GST Included</Text>
-        </TouchableOpacity>
-      </View>
+      <TextInput
+        placeholder="Discount % (Optional)"
+        keyboardType="numeric"
+        value={discount}
+        onChangeText={setDiscount}
+        style={styles.input}
+      />
 
       <TouchableOpacity style={styles.addButton} onPress={addItem}>
         <Text style={styles.buttonText}>Add Item</Text>
       </TouchableOpacity>
 
-      {/* Rectangle Chips */}
-      <View style={styles.chipContainer}>
-        {items.map((item) => (
-          <View key={item.id} style={styles.chip}>
-            <Text style={styles.chipText}>
-              {item.name} - ₹{item.total}
+      <View style={styles.itemsContainer}>
+        {items.map((item, index) => (
+          <View key={item.id} style={styles.card}>
+            <Text style={styles.bold}>
+              {index + 1}. {item.itemName}
             </Text>
+            <Text>Brand: {item.vehicleBrand || "-"}</Text>
+            <Text>Qty: {item.quantity}</Text>
+            <Text>List: ₹{item.listPrice}</Text>
+            <Text>Discount: {item.discountPercent}%</Text>
+            <Text>Net: ₹{item.net.toFixed(2)}</Text>
+            <Text>Amount: ₹{item.amount.toFixed(2)}</Text>
           </View>
         ))}
       </View>
 
-      <View style={styles.summary}>
-        <Text>Subtotal: ₹{totals.base.toFixed(2)}</Text>
-        <Text>GST: ₹{totals.gst.toFixed(2)}</Text>
-        <Text style={styles.grand}>
-          Grand Total: ₹{totals.total.toFixed(2)}
-        </Text>
-      </View>
+      <Text style={styles.total}>
+        Grand Total: ₹{grandTotal.toFixed(2)}
+      </Text>
 
-      <TouchableOpacity style={styles.generateButton}>
+      <TouchableOpacity style={styles.generateButton} onPress={generatePDF}>
         <Text style={styles.buttonText}>Generate Bill PDF</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -158,82 +287,53 @@ export default function BillScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 20,
-    color: "#000",
   },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 8,
     padding: 12,
-    marginBottom: 10,
-    color: "#000",
-    backgroundColor: "#fff",
-  },
-  toggleContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 15,
-  },
-  toggleButton: {
-    flex: 1,
-    borderWidth: 1,
-    padding: 10,
     borderRadius: 8,
-    alignItems: "center",
-    marginHorizontal: 5,
-  },
-  activeToggle: {
-    backgroundColor: "#4CAF50",
-  },
-  toggleText: {
-    fontWeight: "600",
-    color: "#000",
+    marginBottom: 10,
   },
   addButton: {
     backgroundColor: "#007AFF",
     padding: 14,
     borderRadius: 8,
     alignItems: "center",
+    marginVertical: 10,
   },
   generateButton: {
     backgroundColor: "#000",
     padding: 14,
     borderRadius: 8,
     alignItems: "center",
-    marginTop: 20,
+    marginVertical: 20,
   },
   buttonText: {
     color: "#fff",
     fontWeight: "bold",
   },
-  chipContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginTop: 15,
-  },
-  chip: {
-    backgroundColor: "#e0e0e0",
-    padding: 8,
-    borderRadius: 6,
-    margin: 5,
-  },
-  chipText: {
-    color: "#000",
-  },
-  summary: {
+  itemsContainer: {
     marginTop: 20,
-    borderTopWidth: 1,
-    paddingTop: 10,
   },
-  grand: {
+  card: {
+    borderWidth: 1,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  bold: {
     fontWeight: "bold",
+  },
+  total: {
     fontSize: 18,
-    marginTop: 5,
+    fontWeight: "bold",
+    marginTop: 15,
   },
 });
