@@ -35,6 +35,47 @@ export const billStyles = StyleSheet.create({
   sectionHeader: {
     marginBottom: 16,
   },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 14,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    marginRight: 10,
+  },
+  checkboxChecked: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  checkboxTick: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  checkboxTextWrap: {
+    flex: 1,
+  },
+  checkboxLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+  },
+  checkboxSubtext: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
@@ -57,6 +98,30 @@ export const billStyles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textPrimary,
     backgroundColor: "#FFFFFF",
+  },
+  suggestionsBox: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    marginTop: 8,
+    backgroundColor: "#FFFFFF",
+    overflow: "hidden",
+  },
+  suggestionItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  suggestionName: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    fontWeight: "600",
+  },
+  suggestionMeta: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 2,
   },
   row: {
     flexDirection: "row",

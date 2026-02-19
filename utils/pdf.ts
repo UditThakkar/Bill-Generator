@@ -10,7 +10,8 @@ export const generatePDF = async (
   customerName: string,
   grandTotal: number,
   totalGST: number,
-  gstIncluded: boolean
+  gstIncluded: boolean,
+  showGstNumber: boolean
 ) => {
   if (items.length === 0) return;
 
@@ -25,10 +26,10 @@ export const generatePDF = async (
           <td>${item.itemName}</td>
           <td>${item.vehicleBrand || "-"}</td>
           <td align="center">${item.quantity}</td>
-          <td align="right">₹${item.listPrice.toFixed(2)}</td>
+          <td align="right">Rs. ${item.listPrice.toFixed(2)}</td>
           <td align="center">${item.discountPercent}%</td>
-          <td align="right">₹${item.net.toFixed(2)}</td>
-          <td align="right">₹${item.amount.toFixed(2)}</td>
+          <td align="right">Rs. ${item.net.toFixed(2)}</td>
+          <td align="right">Rs. ${item.amount.toFixed(2)}</td>
         </tr>
       `
     )
@@ -39,9 +40,11 @@ export const generatePDF = async (
     : `
       <div class="summary-row">
         <span class="label">GST (18%):</span>
-        <span class="amount">₹${totalGST.toFixed(2)}</span>
+        <span class="amount">Rs. ${totalGST.toFixed(2)}</span>
       </div>
     `;
+
+  const gstNumberRow = showGstNumber ? `<p>GSTIN: ${COMPANY_INFO.gstin}</p>` : "";
 
   const html = `
 <html>
@@ -58,10 +61,10 @@ ${getPDFStyles()}
       <div class="company-info">
         <h1>${COMPANY_INFO.nameHindi}</h1>
         <h1 style="font-size: 20px; color: #1F2937;">${COMPANY_INFO.nameEnglish}</h1>
-        <p style="margin-top: 10px;">📍 ${COMPANY_INFO.address}</p>
-        <p>📱 +91 ${COMPANY_INFO.phone}</p>
-        <p>🏢 Owner: ${COMPANY_INFO.owner}</p>
-        <p>📋 GSTIN: ${COMPANY_INFO.gstin}</p>
+        <p style="margin-top: 10px;">Address: ${COMPANY_INFO.address}</p>
+        <p>Phone: +91 ${COMPANY_INFO.phone}</p>
+        <p>Owner: ${COMPANY_INFO.owner}</p>
+        ${gstNumberRow}
       </div>
       <div class="bill-header">
         <h2>INVOICE</h2>
@@ -106,12 +109,12 @@ ${getPDFStyles()}
     <div class="summary-box">
       <div class="summary-row">
         <span class="label">Subtotal:</span>
-        <span class="amount">₹${grandTotal.toFixed(2)}</span>
+        <span class="amount">Rs. ${grandTotal.toFixed(2)}</span>
       </div>
       ${gstSummaryRow}
       <div class="summary-row total">
         <span class="label">GRAND TOTAL:</span>
-        <span>₹${(grandTotal + totalGST).toFixed(2)}</span>
+        <span>Rs. ${(grandTotal + totalGST).toFixed(2)}</span>
       </div>
       <div style="font-size: 12px; color: #999; margin-top: 12px; text-align: center; font-weight: 500;">
         ${gstIncluded ? "(GST @18% included in Price)" : "(GST @18% calculated separately)"}
@@ -120,7 +123,7 @@ ${getPDFStyles()}
   </div>
 
   <div class="thank-you">
-    ✨ Thank you for your business! ✨
+    Thank you for your business.
   </div>
 
   <div class="footer">
@@ -134,10 +137,7 @@ ${getPDFStyles()}
   const { uri } = await Print.printToFileAsync({ html });
 
   const pdfName = `Bill_${Date.now()}.pdf`;
-  const destination = new FileSystem.File(
-    FileSystem.Paths.document,
-    pdfName
-  );
+  const destination = new FileSystem.File(FileSystem.Paths.document, pdfName);
 
   const tempFile = new FileSystem.File(uri);
   await tempFile.move(destination);
