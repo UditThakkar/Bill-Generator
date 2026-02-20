@@ -9,12 +9,10 @@
       "android": {
         "buildType": "apk",
         "releaseChannel": "default",
-        "enableNetworkInspector": false,
-        "enableNetworkDebugging": false,
         "withoutCredentials": false
       },
       "env": {
-        "production": true
+        "production": "true"
       }
     }
   },
