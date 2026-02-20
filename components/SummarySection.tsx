@@ -7,6 +7,7 @@ interface SummarySectionProps {
   totalGST: number;
   gstIncluded: boolean;
   items: any[];
+  isGenerating?: boolean;
   onGeneratePDF: () => void;
 }
 
@@ -15,6 +16,7 @@ export const SummarySection = ({
   totalGST,
   gstIncluded,
   items,
+  isGenerating = false,
   onGeneratePDF,
 }: SummarySectionProps) => {
   return (
@@ -23,35 +25,41 @@ export const SummarySection = ({
         <View style={billStyles.summarySection}>
           <View style={billStyles.summaryRow}>
             <Text style={billStyles.summaryLabel}>Subtotal:</Text>
-            <Text style={billStyles.summaryValue}>₹{grandTotal.toFixed(2)}</Text>
+            <Text style={billStyles.summaryValue}>Rs. {grandTotal.toFixed(2)}</Text>
           </View>
           {!gstIncluded && (
             <View style={billStyles.summaryRow}>
               <Text style={billStyles.summaryLabel}>GST (18%):</Text>
-              <Text style={billStyles.summaryValue}>₹{totalGST.toFixed(2)}</Text>
+              <Text style={billStyles.summaryValue}>Rs. {totalGST.toFixed(2)}</Text>
             </View>
           )}
           <View style={billStyles.summaryDivider} />
           <View style={billStyles.totalRow}>
             <Text style={billStyles.totalLabel}>Grand Total:</Text>
             <Text style={billStyles.totalAmount}>
-              ₹{(grandTotal + totalGST).toFixed(2)}
+              Rs. {(grandTotal + totalGST).toFixed(2)}
             </Text>
           </View>
           <Text style={billStyles.gstNote}>
             {gstIncluded
-              ? "💡 GST @18% included in prices"
-              : "💡 GST @18% added separately"}
+              ? "GST @18% included in prices"
+              : "GST @18% added separately"}
           </Text>
         </View>
       )}
 
       {items.length > 0 && (
-        <TouchableOpacity 
-          style={billStyles.generateButton} 
+        <TouchableOpacity
+          style={[
+            billStyles.generateButton,
+            isGenerating && billStyles.generateButtonDisabled,
+          ]}
           onPress={onGeneratePDF}
+          disabled={isGenerating}
         >
-          <Text style={billStyles.generateButtonText}>📄 Generate & Share PDF</Text>
+          <Text style={billStyles.generateButtonText}>
+            {isGenerating ? "Generating PDF..." : "Generate & Share PDF"}
+          </Text>
         </TouchableOpacity>
       )}
     </>

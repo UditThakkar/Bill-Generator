@@ -21,6 +21,90 @@ export const billStyles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontWeight: "500",
   },
+  draftCreator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  draftInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+  },
+  draftAddButton: {
+    backgroundColor: COLORS.secondary,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  draftAddButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  draftTabs: {
+    marginBottom: 14,
+  },
+  draftChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+    marginRight: 10,
+    minWidth: 160,
+    maxWidth: 220,
+  },
+  draftChipActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: "#EFF6FF",
+  },
+  draftChipMain: {
+    paddingVertical: 10,
+    paddingLeft: 12,
+    paddingRight: 8,
+    flex: 1,
+  },
+  draftChipText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
+  draftChipTextActive: {
+    color: COLORS.primary,
+  },
+  draftChipCount: {
+    fontSize: 11,
+    marginTop: 2,
+    color: COLORS.textSecondary,
+  },
+  draftChipCountActive: {
+    color: COLORS.primary,
+  },
+  draftChipClose: {
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    borderLeftWidth: 1,
+    borderLeftColor: COLORS.border,
+  },
+  draftChipCloseText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.textSecondary,
+  },
+  draftChipCloseTextActive: {
+    color: COLORS.primary,
+  },
   formSection: {
     backgroundColor: COLORS.cardBg,
     borderRadius: 12,
@@ -334,6 +418,9 @@ export const billStyles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
+  },
+  generateButtonDisabled: {
+    opacity: 0.65,
   },
   generateButtonText: {
     color: "#FFFFFF",
