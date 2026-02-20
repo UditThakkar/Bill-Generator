@@ -14,6 +14,10 @@ export default function HomeScreen() {
     });
   };
 
+  const goToInventory = () => {
+    router.push("/inventory");
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Start New Bill</Text>
@@ -27,6 +31,10 @@ export default function HomeScreen() {
 
       <TouchableOpacity style={styles.button} onPress={goToBill}>
         <Text style={styles.buttonText}>Create Bill</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.secondaryButton} onPress={goToInventory}>
+        <Text style={styles.secondaryButtonText}>View Inventory</Text>
       </TouchableOpacity>
     </View>
   );
@@ -59,6 +67,19 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#fff",
+    fontWeight: "bold",
+  },
+  secondaryButton: {
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#007AFF",
+    marginTop: 10,
+  },
+  secondaryButtonText: {
+    color: "#007AFF",
     fontWeight: "bold",
   },
 });

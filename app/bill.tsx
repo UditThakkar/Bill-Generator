@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, ScrollView, Text, View } from "react-native";
 
 import { BillForm } from "../components/BillForm";
 import { ItemsList } from "../components/ItemsList";
@@ -12,6 +12,11 @@ import {
   createBillItem,
   validateItemInput,
 } from "../utils/calculations";
+import {
+  addProductIfMissing,
+  InventoryProduct,
+  searchInventoryProducts,
+} from "../utils/inventory";
 import { generatePDF } from "../utils/pdf";
 
 export default function BillScreen() {
@@ -23,16 +28,50 @@ export default function BillScreen() {
   const [quantity, setQuantity] = useState("");
   const [listPrice, setListPrice] = useState("");
   const [discount, setDiscount] = useState("");
+  const [productSuggestions, setProductSuggestions] = useState<InventoryProduct[]>(
+    []
+  );
 
   // App state
   const [items, setItems] = useState<BillItem[]>([]);
   const [validationErrors, setValidationErrors] = useState("");
   const [gstIncluded, setGstIncluded] = useState(true);
+  const [showGstNumber, setShowGstNumber] = useState(true);
 
   // Calculate totals
   const { grandTotal, totalGST } = calculateTotals(items, gstIncluded);
 
-  const handleAddItem = () => {
+  useEffect(() => {
+    let cancelled = false;
+
+    const runSearch = async () => {
+      const query = itemName.trim();
+      if (!query) {
+        setProductSuggestions([]);
+        return;
+      }
+
+      const matches = await searchInventoryProducts(query);
+      if (!cancelled) {
+        setProductSuggestions(matches);
+      }
+    };
+
+    runSearch();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [itemName]);
+
+  const handleSelectProductSuggestion = (product: InventoryProduct) => {
+    setItemName(product.itemName);
+    setVehicleBrand(product.vehicleBrand);
+    setListPrice(product.listPrice.toString());
+    setProductSuggestions([]);
+  };
+
+  const handleAddItem = async () => {
     const validation = validateItemInput(itemName, quantity, listPrice, discount);
 
     if (validation.hasError) {
@@ -49,6 +88,21 @@ export default function BillScreen() {
     );
 
     setItems([...items, newItem]);
+    try {
+      const { wasCreated } = await addProductIfMissing({
+        itemName: newItem.itemName,
+        vehicleBrand: newItem.vehicleBrand,
+        listPrice: newItem.listPrice,
+      });
+
+      if (wasCreated) {
+        Alert.alert("Inventory Updated", `${newItem.itemName} added to inventory.`);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not update inventory.";
+      Alert.alert("Inventory Error", message);
+    }
 
     // Reset form
     setItemName("");
@@ -56,6 +110,7 @@ export default function BillScreen() {
     setQuantity("");
     setListPrice("");
     setDiscount("");
+    setProductSuggestions([]);
     setValidationErrors("");
   };
 
@@ -64,7 +119,14 @@ export default function BillScreen() {
   };
 
   const handleGeneratePDF = () => {
-    generatePDF(items, customerName as string, grandTotal, totalGST, gstIncluded);
+    generatePDF(
+      items,
+      customerName as string,
+      grandTotal,
+      totalGST,
+      gstIncluded,
+      showGstNumber
+    );
   };
 
   return (
@@ -88,6 +150,7 @@ export default function BillScreen() {
         listPrice={listPrice}
         discount={discount}
         gstIncluded={gstIncluded}
+        showGstNumber={showGstNumber}
         validationErrors={validationErrors}
         onItemNameChange={setItemName}
         onVehicleBrandChange={setVehicleBrand}
@@ -95,6 +158,9 @@ export default function BillScreen() {
         onListPriceChange={setListPrice}
         onDiscountChange={setDiscount}
         onGstIncludedChange={setGstIncluded}
+        onShowGstNumberChange={setShowGstNumber}
+        productSuggestions={productSuggestions}
+        onSelectProductSuggestion={handleSelectProductSuggestion}
         onAddItem={handleAddItem}
       />
 
